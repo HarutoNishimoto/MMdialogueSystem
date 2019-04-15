@@ -1,0 +1,10 @@
+pcm_fftMag_mfcc_sma[6]_range
+pcm_fftMag_mfcc_sma[6]_linregerrQ
+pcm_fftMag_mfcc_sma[6]_stddev
+pcm_fftMag_mfcc_sma[10]_range
+pcm_fftMag_mfcc_sma_de[3]_max
+pcm_fftMag_mfcc_sma_de[3]_range
+pcm_fftMag_mfcc_sma_de[3]_stddev
+pcm_fftMag_mfcc_sma_de[5]_range
+pcm_fftMag_mfcc_sma_de[5]_stddev
+pcm_fftMag_mfcc_sma_de[10]_range
