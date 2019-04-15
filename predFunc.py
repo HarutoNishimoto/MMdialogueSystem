@@ -46,14 +46,12 @@ def readCsv(df):
 def predUnknown(X_test, model, fea_type):
 	X_test = np.array([X_test.tolist()])
 	# 説明変数を取り出した上でスケーリング
-	scale = np.load('C:/Users/kaldi/Desktop/main/model/{}_scale.npy'.format(fea_type))
+	scale = np.load('./model/{}_scale.npy'.format(fea_type))
 	maxi = scale[0]
 	mini = scale[1]
 	X_test[0] = (X_test[0] - mini) / (maxi - mini)
 	# 推定
 	y_pred = model.predict(X_test)
-
-	print(y_pred)
 
 	print('{}の推定結果 : {} / o_prob : {:.3}'.format(fea_type, y_pred, fst.sigmoid(y_pred[0])))
 	return y_pred[0]

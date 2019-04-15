@@ -1,0 +1,5 @@
+record time : 20190415193559408572
+sys_s	sys_e	user_s	user_e	d_pred	v_pred	t_pred	f_pred	fusion	state1	state2	action	utterance
+0.236	0.681	0.235	0.330	0.251
+0.241	0.210	0.514	0.414	0.331
+0.241	0.847	0.514	0.737	0.524

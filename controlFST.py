@@ -200,10 +200,6 @@ if __name__ == "__main__":
 
 	tex = 'g;lfdsndc;lk{}{}'
 
-	aaa = tex.format('aaa', 'sss')
-
-	print(aaa)
-
 
 
 

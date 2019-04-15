@@ -20,16 +20,16 @@ import controlFST as cf
 
 ####### 使用方法 ###############
 # 音声認識をするために、C:\Users\kaldi\dictation-kit-v4.4\ASR.pyを実行してください。
-# 別ターミナルで、C:\Users\kaldi\Desktop\main\main.pyを実行してください。
+# 別ターミナルで、C:\Users\kaldi\Desktop\MMdialogueSystem\main.pyを実行してください。
 # 
 # 以下の3つが連動して動いています．
-# １．このコードの入ったディレクトリ(C:\Users\kaldi\Desktop\main)
+# １．このコードの入ったディレクトリ(C:\Users\kaldi\Desktop\MMdialogueSystem)
 # ２．julus音声認識のためのディレクトリ(C:\Users\kaldi\dictation-kit-v4.4)
 # ３．MMDAgentで対話管理を行うためのディレクトリ(C:\Users\kaldi\Desktop\MMDAgent)
 #
 # 発話後、エンターキーを押してください。それが発話終了の合図になります。
 # 音声認識が完了するまで少し時間がかかります。
-# ASR.pyを実行した方のターミナルを確認し、音声認識が完了したことを確かめてからエンターキーを押してください。
+# 音声認識が完了したことを確かめてからエンターキーを押してください。
 ###############################
 
 class turnIdx:
@@ -144,7 +144,7 @@ if __name__ == '__main__':
 		cmd_arfftocsv = "python arffToCsv.py"
 		# path
 		path_usr_utterance_info = 'C:/Users/kaldi/dictation-kit-v4.4/userUtteranceInfo.csv'
-		path_usr_voice_feature = 'C:/Users/kaldi/Desktop/main/speech_wav/{}.csv'
+		path_usr_voice_feature = './speech_wav/{}.csv'
 
 		# run MMDAgent
 		p1 = subprocess.Popen(cmd_run_mmda.split(" "))
@@ -164,7 +164,9 @@ if __name__ == '__main__':
 		theme = "sports"
 		turnIdx = turnIdx()
 		userID = 'nishimoto'
-		reward = 0
+		# definition
+		response_time_for_NOWORD = 6.0
+		utterance_for_NOWORD = '＊'
 
 		# basetime
 		base_time = time.time()
@@ -234,8 +236,17 @@ if __name__ == '__main__':
 
 			####### ext utterance ######
 			df = pd.read_csv(path_usr_utterance_info)
-			utterance = ''.join(df['word'].values[already_read_idx:].tolist())
-			u_s = df['u_s'].values[already_read_idx] - base_time
+			if already_read_idx == len(df):
+				utterance = utterance_for_NOWORD
+				u_s = s_e + response_time_for_NOWORD
+			else:
+				utterance = ''.join(df['word'].values[already_read_idx:].tolist())
+				u_s = df['u_s'].values[already_read_idx] - base_time
+
+			if (type(utterance) is not str):
+				print('utterance type is not string.')
+				exit()
+			
 			print('u_start : {}'.format(u_s))
 			print('utterance -> {}'.format(utterance))
 			already_read_idx = len(df)

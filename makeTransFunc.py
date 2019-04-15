@@ -79,5 +79,4 @@ def updatePriProb(f_csv, f_param):
 
 if __name__ == '__main__':
 
-	#updateSTparams('fusion_all_reg.csv', 'parameters.txt')
 	updatePriProb('fusion_all_reg.csv', 'parameters.txt')

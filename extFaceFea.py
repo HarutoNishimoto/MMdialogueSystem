@@ -17,7 +17,7 @@ def predictionFace(start, end, file_name='sample'):
 	# 範囲指定
 	df = pd.read_csv("C:/Users/kaldi/Desktop/OpenFace_2.0.5_win_x64/processed/{}.csv".format(file_name))
 	df = df[(start < df[' timestamp']) & (df[' timestamp'] < end)]
-	df_meta = pd.read_csv('C:/Users/kaldi/Desktop/main/refData/actionunit.txt', header=None)
+	df_meta = pd.read_csv('./refData/actionunit.txt', header=None)
 	meta = df_meta[0].values
 	df = df[meta]
 	# 特徴量設計（平均をとる）
