@@ -21,15 +21,12 @@ def softmax(a, coef=1):
 	y = exp_a / sum_exp_a
 	return y 
 
-
 # ソフトマックス関数
 def logit(a):
 	x = np.arange(0.0, 1.01, 0.01)
 	y = (1/a) * np.log(x/(1-x))
-
 	plt.plot(x, y)
 	plt.show()
-
 	
 
 # 興味ありなし（連続値）を引数にしてコマンドメッセージを作成
@@ -67,7 +64,6 @@ def policy(s_1, thres=None):
 		action = "hold"
 	else:
 		action = "change"
-
 	return action
 
 # 信念の更新
@@ -75,20 +71,12 @@ def policy(s_1, thres=None):
 def updateStatePOMDP(state, interest, flg):
 	# 現在の興味度
 	inte = interest.get_interest()	# LR
-	# 新提案手法（inteに別の値を入れる）
-	#if (inte < 0.2) or (0.6 < inte):
-	#	inte = interest.get_prev_ave_interest()
-
-	# 新提案尤度
-	prob = softmax([inte, 1-inte])
-
 	# 尤度
-	#prob = np.array([inte, 1 - inte])
+	prob = np.array([inte, 1 - inte])
 	priprob = getParams('priprob')
 	likelihood = np.diag(prob / priprob)
 	# 状態遷移確率
 	STP = getParams('STP')
-	#print(likelihood)
 	# 計算
 	if flg:
 		next_state = likelihood @ [[0.5], [0.5]]
@@ -96,12 +84,104 @@ def updateStatePOMDP(state, interest, flg):
 		next_state = likelihood @ STP @ state
 	# 正規化係数
 	next_state = next_state/np.sum(next_state, axis=0)[0]
+	return next_state
 
+'''
+
+
+# 信念の更新
+# 尤度のみでactionを加味
+# 現時点でのベスト(190527)
+def updateStatePOMDPwithAction(weight, state, action, interest, flg):
+	# 現在の興味度
+	inte = interest.get_interest()	# LR
+	# 尤度
+	prob = np.array([inte, 1 - inte])
+	priprob = getParams('priprob')
+	if action == 'question_long':
+		likelihood_weight = [weight, 1]
+	elif action in ['oa', 'na']:
+		likelihood_weight = [1, weight+0.1]
+	elif action in ['pa', 'io', 'question_short']:
+		likelihood_weight = [1, weight]
+	else:
+		likelihood_weight = [1, 1]
+	likelihood = np.diag(likelihood_weight * prob / priprob)
+
+	# 状態遷移確率
+	STP = getParams('STP')
+	# 計算
+	if flg:
+		next_state = likelihood @ [[0.5], [0.5]]
+	else:
+		next_state = likelihood @ STP @ state
+	# 正規化係数
+	next_state = next_state/np.sum(next_state, axis=0)[0]
+	return next_state
+
+
+# 信念の更新
+# 尤度とSTPでactionを加味
+def updateStatePOMDPwithAction(weight, state, action, interest, flg):
+	# 現在の興味度
+	inte = interest.get_interest()	# LR
+	# 尤度
+	prob = np.array([inte, 1 - inte])
+	priprob = getParams('priprob')
+	if action == 'question_long':
+		likelihood_weight = [weight, 1]
+	elif action in ['oa', 'na']:
+		likelihood_weight = [1, weight+0.1]
+	elif action in ['pa', 'io', 'question_short']:
+		likelihood_weight = [1, weight]
+	else:
+		likelihood_weight = [1, 1]
+	likelihood = np.diag(likelihood_weight * prob / priprob)
+	# STP
+	if action in ['oa', 'na', 'pa', 'op']:
+		STP = getParams('STP', system_action_type='down')
+	else:
+		STP = getParams('STP', system_action_type='')
+
+	# 計算
+	if flg:
+		next_state = likelihood @ [[0.5], [0.5]]
+	else:
+		next_state = likelihood @ STP @ state
+	# 正規化係数
+	next_state = next_state/np.sum(next_state, axis=0)[0]
+	return next_state
+'''
+
+
+# 信念の更新
+# STPのみでactionを加味
+def updateStatePOMDPwithAction(weight, state, action, interest, flg):
+	# 現在の興味度
+	inte = interest.get_interest()	# LR
+	# 尤度
+	prob = np.array([inte, 1 - inte])
+	priprob = getParams('priprob')
+	likelihood_weight = [1, 1]
+	likelihood = np.diag(likelihood_weight * prob / priprob)
+
+	# 状態遷移確率
+	if action in ['oa', 'na', 'pa', 'op']:
+		STP = getParams('STP', system_action_type='down')
+	else:
+		STP = getParams('STP', system_action_type='')
+	# 計算
+	if flg:
+		next_state = likelihood @ [[0.5], [0.5]]
+	else:
+		next_state = likelihood @ STP @ state
+	# 正規化係数
+	next_state = next_state/np.sum(next_state, axis=0)[0]
 	return next_state
 
 
 # 外部指定のパラメータを読み込み
-def getParams(return_type, filename='parameters.txt'):
+def getParams(return_type, system_action_type='', filename='parameters.txt'):
 	with open(filename, 'r')as f:
 		paramInfo = f.readlines()
 	paramInfo = [x.replace('\n', '') for x in paramInfo]
@@ -114,8 +194,12 @@ def getParams(return_type, filename='parameters.txt'):
 		paramDict[paramInfo[i][0]] = float(paramInfo[i][1])
 
 	if return_type == 'STP':
-		STP = np.array([[paramDict['o->o'], paramDict['x->o']],
-			[paramDict['o->x'], paramDict['x->x']]])
+		if system_action_type == '':
+			da = ''
+		else:
+			da = system_action_type + '_'
+		STP = np.array([[paramDict[da + 'o->o'], paramDict[da + 'x->o']],
+			[paramDict[da + 'o->x'], paramDict[da + 'x->x']]])
 		return STP
 	elif return_type == 'policy':
 		return paramDict['p_thres1'], paramDict['p_thres2']
@@ -125,7 +209,7 @@ def getParams(return_type, filename='parameters.txt'):
 		return [paramDict['prob_o'], paramDict['prob_x']]
 	elif return_type == 'sigmoid':
 		return paramDict['probA'], paramDict['probB']
-	if return_type == 'score':
+	elif return_type == 'score':
 		score = np.array([[paramDict['d->d'], paramDict['d->h'], paramDict['d->c']],
 		[paramDict['h->d'], paramDict['h->h'], paramDict['h->c']],
 		[paramDict['c->d'], paramDict['c->h'], paramDict['c->c']]])
@@ -156,7 +240,6 @@ def sigmoid(x, print=False):
 
 ############ 使用していない ##################
 
-
 # 前回のinterestと今回のinterestを比べただけの簡単な報酬
 def calReward(reward, inte):
 	if (inte.cnt_interest >= 0) and (inte.prev_interest >= 0):
@@ -167,7 +250,6 @@ def calReward(reward, inte):
 		reward = -10
 	if (inte.cnt_interest < 0) and (inte.prev_interest < 0):
 		reward = -1
-	
 	return reward
 
 
@@ -178,7 +260,6 @@ def updateSTP(action, reward):
 	meta = [action + x for x in meta]
 	cnt_STP = df[meta].values[-1]
 	prev_STP = df[meta].values[-2]
-
 	# 更新
 	alpha = 0.2
 	gamma = 0.99
@@ -189,7 +270,6 @@ def updateSTP(action, reward):
 	add_STP = ",".join([str(x) for x in add.values.tolist()])
 	with open("STP_params.csv", "a")as f:
 		f.write(add_STP + "\n")
-
 	return ret_STP.reshape([2, 2])
 
 ############ 使用していない ##################
@@ -198,12 +278,5 @@ def updateSTP(action, reward):
 
 if __name__ == "__main__":
 
-	tex = 'g;lfdsndc;lk{}{}'
-
-
-
-
-	
-
-
+	pass
 

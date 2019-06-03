@@ -1,3 +1,4 @@
+###### koremadeno STP (including even values)
 #set 4 values for state transition probability
 #s1 -> o , s2 -> x
 #trans(s1 -> s1)
@@ -8,6 +9,22 @@ o->x=0.301
 x->o=0.213
 #trans(s2 -> s2)
 x->x=0.787
+
+###### 190527 clustering ['oa', 'na', 'pa', 'op']
+#down_o->o=0.307
+#down_o->x=0.693
+#down_x->o=0.072
+#down_x->x=0.928
+#
+#else_o->o=0.827
+#else_o->x=0.173
+#else_x->o=0.254
+#else_x->x=0.746
+
+down_o->o=0.307
+down_o->x=0.693
+down_x->o=0.3
+down_x->x=0.7
 
 #priori prob (s1 and s2)
 #s1 -> o, x -> s2
@@ -45,3 +62,59 @@ p_thres2=0.6
 t_thres1=3
 #thres2
 t_thres2=5
+
+
+##### 190527 remove even values (inte = 0.5)
+##set 4 values for state transition probability
+#o->o=0.848
+#o->x=0.152
+#x->o=0.073
+#x->x=0.927
+
+
+#
+####190523 for JSAI2019 for POMDP with Action
+#### da is ['qw', 'qy', 'io', 'na', 'pa', 'oa', 'su', 'op']
+#
+#qw_o->o=0.946
+#qw_o->x=0.054
+#qw_x->o=0.26
+#qw_x->x=0.74
+#
+#qy_o->o=0.813
+#qy_o->x=0.187
+#qy_x->o=0.284
+#qy_x->x=0.716
+#
+#io_o->o=0.627
+#io_o->x=0.373
+#io_x->o=0.181
+#io_x->x=0.819
+#
+#su_o->o=0.6
+#su_o->x=0.4
+#su_x->o=0.286
+#su_x->x=0.714
+
+## koreha yuuyou sou na kannji
+#
+#na_o->o=0.385
+#na_o->x=0.615
+#na_x->o=0.043
+#na_x->x=0.957
+#
+#pa_o->o=0.356
+#pa_o->x=0.644
+#pa_x->o=0.059
+#pa_x->x=0.941
+#
+#oa_o->o=0.219
+#oa_o->x=0.781
+#oa_x->o=0.079
+#oa_x->x=0.921
+#
+#op_o->o=0.121
+#op_o->x=0.879
+#op_x->o=0.079
+#op_x->x=0.921
+#
