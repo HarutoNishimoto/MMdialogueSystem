@@ -3,10 +3,10 @@
 # ここはFSTにコマンドメッセージを送るモジュール
 import math
 import numpy as np
-import main
 import pandas as pd
-
 import matplotlib.pyplot as plt
+import main
+import random
 
 
 # ソフトマックス関数
@@ -21,237 +21,104 @@ def softmax(a, coef=1):
 	y = exp_a / sum_exp_a
 	return y 
 
-# ソフトマックス関数
-def logit(a):
-	x = np.arange(0.0, 1.01, 0.01)
-	y = (1/a) * np.log(x/(1-x))
-	plt.plot(x, y)
-	plt.show()
-	
 
-# 興味ありなし（連続値）を引数にしてコマンドメッセージを作成
-def makeCommandMessage(action, state, interest, theme, turnIdx):
-	thres1, thres2 = getParams('policy')
-	
-	# 保留(hold)、掘り下げ(dig)、切り替え(change)とする
-	if thres2 <= state[0][0]:
-		send_message = "RECOG_EVENT_STOP|{}|dig|{}".format(theme, turnIdx.idx_dig)
-		action = "dig"
-		turnIdx.cntup("dig")
-	elif (thres1 <= state[0][0]) and (state[0][0] < thres2):
-		send_message = "RECOG_EVENT_STOP|{}|hold|{}".format(theme, turnIdx.idx_hold)
-		action = "hold"
-		turnIdx.cntup("hold")
-	else:
-		send_message = "RECOG_EVENT_STOP|{}|change|{}".format(theme, turnIdx.idx_change)
-		action = "change"
-	print(send_message)
-	send_message = send_message.encode("shift_jis")
-
-	return send_message, state, action, turnIdx
-
-
-# 政策関数
-def policy(s_1, thres=None):
-	if thres == None:
-		thres1, thres2 = getParams('policy')
-	else:
-		thres1, thres2 = thres[0], thres[1]
-	# 保留(hold)、掘り下げ(dig)、切り替え(change)とする
-	if thres2 <= s_1:
-		action = "dig"
-	elif (thres1 <= s_1) and (s_1 < thres2):
-		action = "hold"
-	else:
-		action = "change"
-	return action
-
-# 信念の更新
 # 現在の興味と累積のstateを引数にして、次時刻のstateを計算
-def updateStatePOMDP(state, interest, flg):
-	# 現在の興味度
-	inte = interest.get_interest()	# LR
+def updateStatePOMDP(state, interest, da):
+	inte = interest.get_interest()
 	# 尤度
-	prob = np.array([inte, 1 - inte])
-	priprob = getParams('priprob')
+	## 推定値
+	### 正規分布の定義
+	myu = inte
+	sigma = getParams('sigma')
+	ND = lambda x: (math.exp(-(x-myu)**2/(2*sigma**2))) / math.sqrt(2*math.pi)
+	prob = np.array([ND(1), ND(2), ND(3), ND(4), ND(5), ND(6), ND(7)])
+	## 事前確率
+	priprob = getParams('priprob_UI3', da)
+	alpha = getParams('alpha')
+	priprob = np.power(priprob, alpha)
 	likelihood = np.diag(prob / priprob)
 	# 状態遷移確率
-	STP = getParams('STP')
-	# 計算
-	if flg:
-		next_state = likelihood @ [[0.5], [0.5]]
-	else:
-		next_state = likelihood @ STP @ state
-	# 正規化係数
-	next_state = next_state/np.sum(next_state, axis=0)[0]
-	return next_state
-
-'''
-
-
-# 信念の更新
-# 尤度のみでactionを加味
-# 現時点でのベスト(190527)
-def updateStatePOMDPwithAction(weight, state, action, interest, flg):
-	# 現在の興味度
-	inte = interest.get_interest()	# LR
-	# 尤度
-	prob = np.array([inte, 1 - inte])
-	priprob = getParams('priprob')
-	if action == 'question_long':
-		likelihood_weight = [weight, 1]
-	elif action in ['oa', 'na']:
-		likelihood_weight = [1, weight+0.1]
-	elif action in ['pa', 'io', 'question_short']:
-		likelihood_weight = [1, weight]
-	else:
-		likelihood_weight = [1, 1]
-	likelihood = np.diag(likelihood_weight * prob / priprob)
-
-	# 状態遷移確率
-	STP = getParams('STP')
-	# 計算
-	if flg:
-		next_state = likelihood @ [[0.5], [0.5]]
-	else:
-		next_state = likelihood @ STP @ state
-	# 正規化係数
+	STP = getParams('STP_UI3', da)
+	# 更新
+	next_state = likelihood @ STP @ state
 	next_state = next_state/np.sum(next_state, axis=0)[0]
 	return next_state
 
 
-# 信念の更新
-# 尤度とSTPでactionを加味
-def updateStatePOMDPwithAction(weight, state, action, interest, flg):
-	# 現在の興味度
-	inte = interest.get_interest()	# LR
-	# 尤度
-	prob = np.array([inte, 1 - inte])
-	priprob = getParams('priprob')
-	if action == 'question_long':
-		likelihood_weight = [weight, 1]
-	elif action in ['oa', 'na']:
-		likelihood_weight = [1, weight+0.1]
-	elif action in ['pa', 'io', 'question_short']:
-		likelihood_weight = [1, weight]
-	else:
-		likelihood_weight = [1, 1]
-	likelihood = np.diag(likelihood_weight * prob / priprob)
-	# STP
-	if action in ['oa', 'na', 'pa', 'op']:
-		STP = getParams('STP', system_action_type='down')
-	else:
-		STP = getParams('STP', system_action_type='')
+# パラメータの書き換え
+def setParam(param_name, param_value, param_file='/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem-master/parameters.txt'):
 
-	# 計算
-	if flg:
-		next_state = likelihood @ [[0.5], [0.5]]
-	else:
-		next_state = likelihood @ STP @ state
-	# 正規化係数
-	next_state = next_state/np.sum(next_state, axis=0)[0]
-	return next_state
-'''
+	with open(param_file, 'r')as rf:
+		paramInfo = rf.readlines()
 
+	# set values
+	for i, val in enumerate(paramInfo):
+		if val.startswith(param_name):
+			paramInfo[i] = param_name + '=' + str(param_value) + '\n'
 
-# 信念の更新
-# STPのみでactionを加味
-def updateStatePOMDPwithAction(weight, state, action, interest, flg):
-	# 現在の興味度
-	inte = interest.get_interest()	# LR
-	# 尤度
-	prob = np.array([inte, 1 - inte])
-	priprob = getParams('priprob')
-	likelihood_weight = [1, 1]
-	likelihood = np.diag(likelihood_weight * prob / priprob)
+	with open(param_file, 'w')as wf:
+		for val in paramInfo:
+			wf.write(val)
 
-	# 状態遷移確率
-	if action in ['oa', 'na', 'pa', 'op']:
-		STP = getParams('STP', system_action_type='down')
-	else:
-		STP = getParams('STP', system_action_type='')
-	# 計算
-	if flg:
-		next_state = likelihood @ [[0.5], [0.5]]
-	else:
-		next_state = likelihood @ STP @ state
-	# 正規化係数
-	next_state = next_state/np.sum(next_state, axis=0)[0]
-	return next_state
 
 
 # 外部指定のパラメータを読み込み
-def getParams(return_type, system_action_type='', filename='parameters.txt'):
-	with open(filename, 'r')as f:
+def getParams(return_type, system_action_type=''):
+	# ファイル名指定
+	#param_main_file, param_STP_file, param_pprob_file = 'parameters.txt', 'param_STP_UI3_withA.npy', 'param_priprob_UI3_withA.npy'
+	param_main_file, param_STP_file, param_pprob_file = 'parameters.txt', 'takedaT_STP.npy', 'param_priprob_UI3_withA.npy'
+
+	with open(param_main_file, 'r')as f:
 		paramInfo = f.readlines()
 	paramInfo = [x.replace('\n', '') for x in paramInfo]
 	paramInfo = [x for x in paramInfo if x != '']
 	paramInfo = [x for x in paramInfo if '#' not in x]
 	paramInfo = [x.split('=') for x in paramInfo]
-
-	paramDict = {}
+	PD = {}
 	for i, val in enumerate(paramInfo):
-		paramDict[paramInfo[i][0]] = float(paramInfo[i][1])
+		PD[paramInfo[i][0]] = float(paramInfo[i][1])
+
+	# da index
+	DAindex = {}
+	da = ['io','na','no','oa','op','pa','qw','qy']
+	for i, val in enumerate(da):
+		DAindex[val] = i
 
 	if return_type == 'STP':
 		if system_action_type == '':
 			da = ''
 		else:
 			da = system_action_type + '_'
-		STP = np.array([[paramDict[da + 'o->o'], paramDict[da + 'x->o']],
-			[paramDict[da + 'o->x'], paramDict[da + 'x->x']]])
+		STP = np.array([[PD[da + 'o->o'], PD[da + 'x->o']],
+			[PD[da + 'o->x'], PD[da + 'x->x']]])
 		return STP
-	elif return_type == 'policy':
-		return paramDict['p_thres1'], paramDict['p_thres2']
-	elif return_type == 'topic_continue':
-		return paramDict['t_thres1'], paramDict['t_thres2']
 	elif return_type == 'priprob':
-		return [paramDict['prob_o'], paramDict['prob_x']]
+		return [PD['prob_o'], PD['prob_x']]
 	elif return_type == 'sigmoid':
-		return paramDict['probA'], paramDict['probB']
-	elif return_type == 'score':
-		score = np.array([[paramDict['d->d'], paramDict['d->h'], paramDict['d->c']],
-		[paramDict['h->d'], paramDict['h->h'], paramDict['h->c']],
-		[paramDict['c->d'], paramDict['c->h'], paramDict['c->c']]])
-		return score
+		return PD['probA'], PD['probB']
+	elif return_type == 'priprob_UI3':
+		priprob = np.load(param_pprob_file)
+		priprob = priprob[:, DAindex[system_action_type]]
+		for i, val in enumerate(priprob):
+			ratio = lambda x:x/sum(x)
+			if int(val) == 0:
+				priprob[i] = 1	# 要素が0なら1で下駄を履かす
+		return ratio(priprob)
+	elif return_type == 'STP_UI3':
+		STP = np.load(param_STP_file)
+		return STP[:, :, DAindex[system_action_type]]
+	elif return_type == 'alpha':
+		return PD['alpha']
+	elif return_type == 'sigma':
+		return PD['sigma']
 	else:
-		print('invalid return type')
-		
+		print('invalid return type')		
 	return None
 
-
-# 0-1の連続値に変換（0（興味なし）から1（興味あり））
-def sigmoid(x, print=False):
-	probA, probB = getParams('sigmoid')
-	exp = math.e
-	s = 1.0 / (1 + exp**(x * probA + probB))
-
-	if print:
-		import matplotlib.pyplot as plt
-		x, y = np.arange(-5.0, 5.0, 0.05), []
-		for num in x:
-			y.append( 1.0 / (1 + exp**(num * probA + probB)))
-		plt.plot(x, y)
-		plt.show()
-
-	return s
 
 	
 
 ############ 使用していない ##################
-
-# 前回のinterestと今回のinterestを比べただけの簡単な報酬
-def calReward(reward, inte):
-	if (inte.cnt_interest >= 0) and (inte.prev_interest >= 0):
-		reward = 5
-	if (inte.cnt_interest >= 0) and (inte.prev_interest < 0):
-		reward = 20
-	if (inte.cnt_interest < 0) and (inte.prev_interest >= 0):
-		reward = -10
-	if (inte.cnt_interest < 0) and (inte.prev_interest < 0):
-		reward = -1
-	return reward
-
 
 # 報酬をもとに、STPを更新
 def updateSTP(action, reward):
@@ -272,11 +139,50 @@ def updateSTP(action, reward):
 		f.write(add_STP + "\n")
 	return ret_STP.reshape([2, 2])
 
-############ 使用していない ##################
+# 政策関数
+def Policy(belief, current_theme):
 
+	action_class_file = '/Users/haruto/Desktop/mainwork/MMdata_201902/UI3/sysutte_fea8_EA_KM_stand.csv'
+	theme_file = '/Users/haruto/Desktop/mainwork/codes/1902themeInfo/1902MMcorpus_theme_edit.csv'
+
+	ACTdf = pd.read_csv(action_class_file)
+	THEMEdf = pd.read_csv(theme_file)
+	df = pd.merge(ACTdf, THEMEdf, on='agent_utterance')
+	df = df[['cls','theme','agent_utterance']]
+
+	############ ここをメインで変更する（強化学習により）
+	# 適当に設計しています
+	if belief[0, 0] > 0.6 and belief[0, 0] > 0.5:
+		next_action_cls = random.choice([0,1,5])
+	elif belief[0, 0] > 0.6 and belief[0, 0] < 0.5:
+		next_action_cls = random.choice([2,3,4])
+	else:
+		next_action_cls = random.choice([6,7,8,9])
+	############ ここをメインで変更する（強化学習により）
+
+
+
+	CANDIDATEdf = df[(df['cls'] == next_action_cls) & ((df['theme'] == current_theme) | (df['theme'] == 'default'))]
+	print(CANDIDATEdf)
+
+	next_sysUtte_candidate = CANDIDATEdf['agent_utterance'].values
+	# 候補からランダム選択
+	next_sysUtte = random.choice(next_sysUtte_candidate)
+	return next_sysUtte
 
 
 if __name__ == "__main__":
 
-	pass
+	belief = np.array([[0.7, 0.3]]).transpose()
+	print('入力の信念（状態である確率）')
+	print(belief)
+	next_sysUtte = Policy(belief, 'スポーツ')
+	print('選択されたシステム発話')
+	print(next_sysUtte)
 
+
+
+
+	df = pd.read_csv('/Users/haruto/Desktop/mainwork/MMdata_201902/UI3/dialogue.csv')
+	plt.hist(df['reaction'].values, bins=30)
+	plt.show()

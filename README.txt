@@ -1,79 +1,59 @@
 ﻿README
 
-2019/08/01個の1行だけ追記しました
+ver2.0
+ver1系はInteの推定，追跡するものだったが，
+ver2系はUI3を推定する．
 
-【対話システムの起動方法】
-    1. ターミナルを2つ起動させます．（音声認識用と対話管理用）
-    2. 音声認識用のターミナルは'activate py27'でpython2の環境にします．
-    3. 対話管理用のターミナルは'activate py36'でpython3の環境にします．
-    4. 音声認識のものは\Users\kaldi\dictation-kit-v4.4\に移動して，'python ASR_py2.py'で実行．（15秒程度待機が必要です．）
-    5. 対話管理のものは\Users\kaldi\Desktop\main\に移動して，'python main.py'で実行．
-
-    〈対話中の注意〉
-    自分の発話終了した場合，エンターキーを押下してください．
-    コードの都合上，何かしらの音声認識結果がないと対話が続かないです．
-    なので，音声認識用のターミナルに音声認識結果が表示されてからキーを押すようにしてください．
-
-    〈対話終了後の注意〉
-    対話を終了したい場合，どちらのターミナルも'ctrl + C'で終了させてください．
-    （顔の表情をとるopenfaceなどはそのウィンドウのｘを押しても消えません．）
-
-    〈その他〉
-    パラメータは適宜変更してください．
-
-    〈TODO〉
-    使用用途に応じたコードになっていればいいね．
-    現状SVRで推定しているから，LRに変更しなくてはならない
-    モデルとか統合推定とかをいろいろ変更しなくてはならない
-    人に見せる用に，うまくいく条件とかをあらかじめ覚えておく
-    あくまでメイちゃんと話している感が出るようにしたいので，ウィンドウの表示を考える．
-
+ver1系は実際にリアルタイムで対話出来るシステムだったが，
+ver2では，対話用のコードは省略してPOMDPのモデル設計周りに関するコードを管理する．
 
 【各ファイルの説明】
-    model
-    winで作成したmodel
+    190618_pred_state.csv
+    いつのかわからないUI3の推定結果
 
-    train_data
-    alldata2578のcsv
+    190704_takedaSTP/
+    武田先生にSTPを変更してもらったっときのデータ
 
-    speech_wav
-    録音した音声ファイルの格納場所
+        190704baseSTP.csv
+        これまでのベース手法でのU3推定結果
 
-    actionunit.txt
-    userID.csv
-    voice_fea10.txt
-    いるねん
+        190704takedaSTP.csv
+        武田先生のSTPでの推定結果
 
-    mainFunction.py
-    モジュール群
+        takedaT_STP.npy
+        そのSTPデータ
 
-    makeModel.py
-    モデル作成用
+        trans_all.csv
+        UI3_trans.csv
+        STPテンソル作成のために使用した統計データ
 
-    openface.py
-    リアルタイムface
-
-    extTextFea.py
-    text特徴量抽出
-
-    main.py
-    これで全部できる
+    offline.py
+    基本的にメインの活動場所．
+    POMDPで推定したり，以前のものと比較したり．
 
     controlFST.py
-    FST管理。命令や行動のコマンドを送信する
+    POMDPないのSTPやpolicyやパラメータの管理
 
-    arffToCsv.py
-    毎度おなじみコンバーター
+    main.py
+    classの保管場所
 
-    record.py
-    soxで録音するためのもの
+    makeTransFunc.py
+    STPや事前確率をデータから計算
 
+    predFunc.py
+    値の変換，データの読み込み（あまり使用しないっぽい感じがする）
 
-【\Users\kaldi\dictation-kit-v4.4\にはいっているもの】
-    ASR.py
-    リアルタイム音声認識
-    juliusってdictationkitだけあればいいっぽい
+    param_priprob_UI3_withA.npy
+    param_STP_UI3_withA.npy
+    事前確率，STPのデータが入ったnumpyテンソル
 
-    tsInfo.csv
-    ASR結果のtsとwordの格納場所
+    parameters.txt
+    パラメータ
 
+    pred_UI3_POMDP_alpha-04_sigma-04.csv
+    現時点でグリッドサーチで最高の精度がでたモデル
+    alphaは尤度関数の分母の乗数
+    sigmaは連続値計算のための正規分布の分散
+
+    README.txt
+    これ

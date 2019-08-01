@@ -31,39 +31,6 @@ down_x->x=0.7
 prob_o=0.413
 prob_x=0.587
 
-
-###### NOUSE 190220 #######
-
-#score coefficient for evaluate model
-#(true)->(pred)
-d->d=2
-d->h=0
-d->c=-3
-h->d=0
-h->h=1
-h->c=-1
-c->d=-3
-c->h=-1
-c->c=2
-
-#sigmoid params
-# sigmoid == 1 / (1 + exp(x * probA + probB))
-probA=-1.2476
-probB=0.05784
-
-#policy function(has two threshold)
-#thres1
-p_thres1=0.1
-#thres2
-p_thres2=0.6
-
-#topic continue(has two threshold)
-#thres1
-t_thres1=3
-#thres2
-t_thres2=5
-
-
 ##### 190527 remove even values (inte = 0.5)
 ##set 4 values for state transition probability
 #o->o=0.848
@@ -118,3 +85,8 @@ t_thres2=5
 #op_x->o=0.079
 #op_x->x=0.921
 #
+
+
+## parameter UI3 POMDP
+alpha=1.0
+sigma=2.0
