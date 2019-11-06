@@ -2,58 +2,106 @@
 
 ver2.0
 ver1系はInteの推定，追跡するものだったが，
-ver2系はUI3を推定する．
+ver2,ver3系はUI3を推定する．
 
 ver1系は実際にリアルタイムで対話出来るシステムだったが，
 ver2では，対話用のコードは省略してPOMDPのモデル設計周りに関するコードを管理する．
+ver3では，発話をクラスタリングをして，それを用いて対話システムを作成しています．
+
 
 【各ファイルの説明】
-    190618_pred_state.csv
-    いつのかわからないUI3の推定結果
 
-    190704_takedaSTP/
-    武田先生にSTPを変更してもらったっときのデータ
 
-        190704baseSTP.csv
-        これまでのベース手法でのU3推定結果
+XXX_average.csv
+XXX_bycls.csv
+XXX_freq_cls-theme.csv
+XXX.csv
+priprob_XXX.npy
+STP_XXX.npy
+対話に必要なファイル一式
 
-        190704takedaSTP.csv
-        武田先生のSTPでの推定結果
+XXXについて
+    191015_da
+    初期に設計した対話行為(8)を用いたモデル
 
-        takedaT_STP.npy
-        そのSTPデータ
+    191024_fea15_norm
+    KMeansでクラスタリングした提案手法，特徴量は15，特徴量を正規化
 
-        trans_all.csv
-        UI3_trans.csv
-        STPテンソル作成のために使用した統計データ
+    191101_da5
+    今回人手で作成した対話行為(5)を用いたモデル
 
-    offline.py
-    基本的にメインの活動場所．
-    POMDPで推定したり，以前のものと比較したり．
 
-    controlFST.py
-    POMDPないのSTPやpolicyやパラメータの管理
+190704_takedaSTP/
+武田先生にSTPを変更してもらったっときのデータ
 
-    main.py
-    classの保管場所
+    190704baseSTP.csv
+    これまでのベース手法でのU3推定結果
 
-    makeTransFunc.py
-    STPや事前確率をデータから計算
+    190704takedaSTP.csv
+    武田先生のSTPでの推定結果
 
-    predFunc.py
-    値の変換，データの読み込み（あまり使用しないっぽい感じがする）
+    takedaT_STP.npy
+    そのSTPデータ
 
-    param_priprob_UI3_withA.npy
-    param_STP_UI3_withA.npy
-    事前確率，STPのデータが入ったnumpyテンソル
+    trans_all.csv
+    UI3_trans.csv
+    STPテンソル作成のために使用した統計データ
 
-    parameters.txt
-    パラメータ
 
-    pred_UI3_POMDP_alpha-04_sigma-04.csv
-    現時点でグリッドサーチで最高の精度がでたモデル
-    alphaは尤度関数の分母の乗数
-    sigmaは連続値計算のための正規分布の分散
+controlBelief.py
+POMのpolicyなどを管理する場所
 
-    README.txt
-    これ
+defineClass.py
+クラスを定義している場所
+
+makeBeliefFunc.py
+STPやpriprobを作成する
+
+predOffline.py
+メインで動かすもの．システム対話をする
+
+sys_utterance.py
+システム発話の特徴量抽出やクラスタリングをしてファイル作成する
+
+analysys.py
+分析のためのコードいろいろ
+
+
+da5.csv
+対話行為(5)の詳細
+
+UI3_su_da.csv
+対話行為(8)の詳細
+
+191004_mix分析
+分析たくさん
+
+1902themeInfo
+発話ごとのテーマ情報
+
+clustering_sysutte
+手法ごとの実験結果やファイル入れ
+
+log
+手法ごとの対話log入れ
+
+登場する品詞の極性
+ボツになったもの．極性を取ろうとした
+
+分析ファイル
+メモ.txt
+まんま
+
+contextInfo.txt
+contextInfo2.txt
+発話の組の前後関係を示したもの．bi-gram的な情報
+
+README.txt
+これ
+
+
+
+
+
+
+
