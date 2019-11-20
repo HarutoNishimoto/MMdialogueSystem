@@ -15,7 +15,7 @@ import defineClass
 
 
 
-
+# 文章のポジネガを判定するマン
 def getSentencePosNegValue(sentence):
 	df = pd.read_csv('/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/pn_ja.txt',
 		sep=':',
@@ -37,12 +37,6 @@ def getSentencePosNegValue(sentence):
 			if not np.isnan(word_pn_val):
 				all_pn_val += word_pn_val
 				cnt += 1
-		'''
-		if (fields[0] == '助動詞') and (len(fields) == 9):
-			print(fields[6])
-			print(df[df['org'] == fields[6]]['value'].values)
-			print(df[df['kana'] == fields[7]]['value'].values)
-		'''
 		node = node.next
 
 	if cnt != 0:
@@ -51,8 +45,6 @@ def getSentencePosNegValue(sentence):
 	else:
 		print(sentence+','+str(0))
 		return 0
-
-
 
 
 
@@ -475,7 +467,6 @@ def KMeans_2step(Xdata, n_clusters1=5, n_clusters2=2):
 def HierarchicalClustering(Xdata, n_clusters=3, method='ward', metric='euclidean'):
 	from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 	Z = linkage(Xdata, 
-				#'braycurtis','canberra','chebyshev','cityblock','correlation','cosine', 'hamming','jaccard', 
 				metric = metric, 
 				method = method)
 
@@ -543,8 +534,6 @@ if __name__ == '__main__':
 	# userID
 	df = pd.read_csv('./../refData/userID_1902.txt', header=None)
 	userID_1902 = df[0].values
-	# for loop
-	method = ['single','complete','average','weighted','centroid','median','ward']
 	# feature_select
 	FEAdf = pd.read_csv(params.get('path_using_features'), header=None)
 	fea_name = FEAdf[0].values
@@ -742,75 +731,5 @@ if __name__ == '__main__':
 		basedf.to_csv(params.get('path_main_class_info'), index=None)
 
 
-
-
-
-
-	# クラスわけしたもので分類器を構築して推定
-	if action == 'pred':
-
-		####### path指定，dir作成
-		dir_name1 = params.get('feature_name')
-		dir_name2 = '{}_{}_cls{}'.format(cluster_way, normalization, clsN)
-		path = './clustering_sysutte/{}'.format(dir_name1)
-		if not os.path.isdir(path):
-			os.mkdir(path)
-		path = './clustering_sysutte/{}/{}'.format(dir_name1, dir_name2)
-		if not os.path.isdir(path):
-			os.mkdir(path)
-
-		CLSdf = pd.read_csv(params.get('path_main_class_info'))
-
-		# 全データ(test+train)の数が少なかったら，分類器を構築しないことにする
-		clfThres = 100
-		using_class = []
-		c = collections.Counter(df['cls'].values)
-		for key, val in dict(c).items():
-			if val >= clfThres:
-				using_class.append(key)
-
-		## testデータのIDは手で指定
-		test_userID = ['1902F4001','1902F4002','1902F4003','1902M4001','1902M4002']
-		train_userID = list(set(userID_1902) - set(test_userID))
-		train_userID = np.sort(train_userID)
-
-		# 各モーダルごとにtest-trainに分離する．
-		fea_type = ['dialogue','voice','text','face']
-		for fea in fea_type:
-			# userIDだけの行を作成
-			FEAdf = pd.read_csv('./clustering_sysutte/orgData/{}.csv'.format(fea))
-			df = pd.merge(FEAdf, CLSdf, on='name')
-			index = df['name'].values
-			userID = [x.split('_')[0] for x in index]
-			df['userID'] = userID
-
-			df_train = df[df['userID'].isin(train_userID)]
-			df_test = df[df['userID'].isin(test_userID)]
-
-			df_train = df_train.drop('userID', axis=1)
-			df_test = df_test.drop('userID', axis=1)
-
-			df_train.to_csv('{}/{}_train.csv'.format(path, fea), index=None)
-			df_test.to_csv('{}/{}_test.csv'.format(path, fea), index=None)
-		
-		# a（クラスタ）ごとに分類器構築，推定，比較
-		dfs = []
-		for c in using_class:
-			df = UI.fusionALL(path, clf, da=None, cls=c)
-			dfs.append(df)
-			df.to_csv('{}/fusion_pred_cls{}.csv'.format(path, str(c)), index=None)
-
-		concatdf = pd.concat(dfs)
-		concatdf = concatdf.sort_values('name')
-		concatdf.to_csv('{}/fusion_pred.csv'.format(path), index=None)
-
-		print('###################{}#####################'.format(clsN))
-
-		# 0.691
-		df = pd.read_csv('./clustering_sysutte/predORGmodel.csv')
-		RMSE(df['label'].values, df['fusion_pred'].values)
-
-		df = pd.read_csv('{}/fusion_pred.csv'.format(path))
-		RMSE(df['label'].values, df['fusion_pred'].values)
 
 

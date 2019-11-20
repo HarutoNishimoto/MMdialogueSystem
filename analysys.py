@@ -73,13 +73,6 @@ if __name__ == '__main__':
 		df = pd.merge(df1,df2,on='agent_utterance')
 		df.to_csv('da5.csv', index=None)
 
-	if options.action == 'scale':
-		array = [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]
-		#array = [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1]
-		Xdata = preprocessing.scale(array)#標準化（stand）
-		print(np.max(Xdata) - np.min(Xdata))
-		print(Xdata)
-
 
 	# テーマ内の球数をカウント
 	if options.action == 'cnttheme':

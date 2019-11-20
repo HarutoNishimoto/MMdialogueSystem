@@ -73,7 +73,7 @@ def updateBelief(state, UI, action, params):
 	sigma = float(params.get('sigma'))
 	ND = lambda x: (math.exp(-(x-myu)**2/(2*sigma**2))) / math.sqrt(2*math.pi)
 	# 話題変更のときだけ別の操作
-	if action == 'change_topic':
+	if action == 'change_theme':
 		next_state = np.array([ND(x) for x in range(1, state.shape[0] + 1, 1)])
 		next_state = next_state/np.sum(next_state)
 		return next_state
@@ -112,7 +112,7 @@ def getNounandLen(utterance):
 
 
 # 政策関数
-def Policy(belief, user_utterance, history_userword, history_utterance, history_theme, model):
+def Policy(belief, user_utterance, history_utterance, history_theme, model):
 
 	# params init 
 	params = defineClass.params()
@@ -125,17 +125,7 @@ def Policy(belief, user_utterance, history_userword, history_utterance, history_
 	belief_1dim = np.dot(belief.flatten(), np.arange(1, len(belief.flatten())+1, 1))
 	next_action_cls = 0
 	### クラスの選択
-	if model == 'euclid_dim1':
-		candidate_cls_num = 3
-		prevUI3 = pd.read_csv('./190821_UI3average_N-1.csv')['UI3average(N-1)'].values
-		diff = (prevUI3 - belief_1dim)*(prevUI3 - belief_1dim)
-		Dict = dict(zip(diff, np.arange(0, len(set(df['cls'].values)), 1)))
-		near = np.sort(diff)[:candidate_cls_num]
-		candidate_cls = []
-		for val in near:
-			candidate_cls.append(Dict[val])
-		next_action_cls = random.choice(candidate_cls)
-	elif model == 'euclid_dim3':
+	if model == 'euclid_dim3':
 		candidate_cls_num = 3
 		feadf = pd.read_csv(params.get('path_feature_average_by_class'))
 		feadf['prevUI3'] = feadf['UI3average'].values - feadf['UI3average_diff'].values
@@ -189,7 +179,7 @@ def Policy(belief, user_utterance, history_userword, history_utterance, history_
 			next_action_cls = 0
 	elif model == 'hand_STP':
 		if user_utterance != None:
-			if history_utterance.get_prev_sysutte_class() == 'change_topic':
+			if history_utterance.get_prev_sysutte_class() == 'change_theme':
 				next_action_cls = random.choice([0, 3])# 情報提供か，依存なし質問か
 			else:
 				STPdf = pd.read_csv(params.get('path_hand_STP'))
@@ -216,7 +206,7 @@ def Policy(belief, user_utterance, history_userword, history_utterance, history_
 		# 話題変更した直後は専用の発話を使用しましょう．
 		if history_theme.nowTheme_ExchgNum == 1:
 			next_sysutte = ' *** これから{}の話をしましょう***'.format(history_theme.nowTheme)
-			next_sysutte_cls = 'change_topic'
+			next_sysutte_cls = 'change_theme'
 			history_utterance.add_sysutte_class(next_sysutte_cls)
 			break
 
@@ -244,16 +234,6 @@ def Policy(belief, user_utterance, history_userword, history_utterance, history_
 			history_utterance.add_sysutte(next_sysutte, 'default')
 			history_utterance.add_sysutte_class(next_sysutte_cls)
 			correct = True
-
-	'''##### オウム返しくん
-	history_userword.add(user_utterance)
-	if len(history_userword.getNewWord()) > 0:
-		parrot = random.choice(history_userword.getNewWord())
-		parrot += 'ですか．'
-	else:
-		parrot = ''
-	'''##### オウム返しくん
-
 
 	############ ここをメインで変更する（強化学習により）
 	return next_sysutte,next_sysutte_cls

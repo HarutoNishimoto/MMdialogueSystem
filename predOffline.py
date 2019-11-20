@@ -7,11 +7,6 @@ from optparse import OptionParser
 import sys
 import matplotlib.pyplot as plt
 
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
-
-
 # 基本的に，python predOffline.py -A offlineで動く．
 # モデルを指定するときは，optionでつけれるはず
 
@@ -39,7 +34,7 @@ if __name__ == '__main__':
     optparser.add_option('-A', dest='action',
                         help='action type', default=None, type='str')
     optparser.add_option('--model', dest='model',
-                        help='euclid_dim3? euclid_dim1? base? hand_STP?', default='euclid_dim3_weighted', type='str')
+                        help='euclid_dim3? euclid_dim1? base? hand_STP?', default='euclid_dim3', type='str')
     (options, args) = optparser.parse_args()
     if options.action is None:
         sys.exit('System will exit')
@@ -55,7 +50,6 @@ if __name__ == '__main__':
         UI = defineClass.userImpression()
         utteHis = defineClass.historySysUtte()
         themeHis = defineClass.historyTheme(random_choice=False)
-        UWordHis = defineClass.historyUserWord()
         init_UI3 = 4
         current_belief, next_belief = np.ones((7, 1)), np.ones((7, 1))
         exchg_num = 15
@@ -67,14 +61,14 @@ if __name__ == '__main__':
                 current_belief = next_belief
                 if i == 0:
                     UI.update(init_UI3)
-                    next_belief = cb.updateBelief(current_belief, UI, 'change_topic', params)
+                    next_belief = cb.updateBelief(current_belief, UI, 'change_theme', params)
                     themeHis.decideNextTheme(init_UI3)
-                    next_sysUtte, action = cb.Policy(next_belief, None, UWordHis, utteHis, themeHis, model=model)
+                    next_sysUtte, action = cb.Policy(next_belief, None, utteHis, themeHis, model=model)
                 else:
                     UI.update(current_UI3)
                     next_belief = cb.updateBelief(current_belief, UI, action, params)
                     themeHis.decideNextTheme(current_UI3)
-                    next_sysUtte, action = cb.Policy(next_belief, user_utterance, UWordHis, utteHis, themeHis, model=model)
+                    next_sysUtte, action = cb.Policy(next_belief, user_utterance, utteHis, themeHis, model=model)
                 print(next_sysUtte)
                 # ユーザの発話情報を入力
                 user_utterance = input('what do you say? >> ')

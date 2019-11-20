@@ -4,54 +4,13 @@ import pandas as pd
 import random
 import MeCab
 
-class turnIdx:
-	def __init__(self):
-		self.idx_hold = 1
-		self.idx_dig = 1
-		self.idx_change = 1
-		self.cont_num = 0
-
-	def cntup(self, action):
-		if action == "hold":
-			self.idx_hold += 1
-		elif action == "dig":
-			self.idx_dig += 1
-		elif action == "change":
-			self.idx_change += 1
-
-	def reset(self):
-		self.idx_hold = 1
-		self.idx_dig = 1
-		self.idx_change = 1
-		self.cont_num = 0
-
-	def continuity(self):
-		self.cont_num += 1
-
-class userImpression:
-	def __init__(self, queue_size=3):
-		self.prev_UI = [''] * queue_size
-		self.current_UI = 0
-
-	def update(self, UI):
-		self.prev_UI.append(self.current_UI)
-		del self.prev_UI[0]
-		self.current_UI = UI
-
-	def getUserImpression(self):
-		return self.current_UI
-
-	def show(self):
-		print('prev', self.prev_UI)
-		print('current', self.current_UI)
 
 
-
-
+# パラメータ持ちです
 class params:
 	def __init__(self):
 		self.params = {}
-		self.param_file_name = './../refData/parameters.txt'
+		self.param_file_name = '/Users/haruto/Desktop/mainwork/codes/refData/parameters.txt'
 		self.cls_num = 20
 
 		with open(self.param_file_name, 'r')as f:
@@ -110,12 +69,28 @@ class params:
 			for val in paramInfo:
 				wf.write(val)
 
-	def show(self):
-		for key, val in self.params.items():
-			print(key, val)
 
 
 
+# UIの管理します
+class userImpression:
+	def __init__(self, queue_size=3):
+		self.prev_UI = [''] * queue_size
+		self.current_UI = 0
+
+	def update(self, UI):
+		self.prev_UI.append(self.current_UI)
+		del self.prev_UI[0]
+		self.current_UI = UI
+
+	def getUserImpression(self):
+		return self.current_UI
+
+
+
+
+
+# システム発話の管理します
 class historySysUtte:
 	def __init__(self):
 		self.history_sysutte = []
@@ -135,9 +110,13 @@ class historySysUtte:
 		self.history_sysutte_class.append(clas)
 
 	def get_prev_sysutte_class(self):
-		print(self.history_sysutte_class)
 		return self.history_sysutte_class[-1]
 
+
+
+
+# ユーザの重要そうな単語だけを保持します
+# 今は使用していません（今後いるかもしれません）
 class historyUserWord:
 	def __init__(self):
 		self.history_user_word = {}
@@ -161,19 +140,11 @@ class historyUserWord:
 						self.user_latest_new_word.append(word)
 				node = node.next
 
-	def show(self):
-		for key, val in self.history_user_word.items():
-			print(val, key)
 
-	def getNewWord(self):
-		return self.user_latest_new_word
-
-
-
-
+# themeを管理してます
 class historyTheme:
 	def __init__(self, random_choice=True):
-		self.allTheme = list(pd.read_csv('./../refData/usingTheme.txt', header=None)[0].values)
+		self.allTheme = list(pd.read_csv('/Users/haruto/Desktop/mainwork/codes/refData/usingTheme.txt', header=None)[0].values)
 		self.random_choice = random_choice
 		if self.random_choice == True:
 			self.nowTheme = random.choice(self.allTheme)
@@ -225,12 +196,25 @@ class historyTheme:
 
 		return self.nowTheme
 
-	def show(self):
-		if len(self.history_UI3) > 0:
-			print(self.nowTheme[0], self.nowTheme_ExchgNum, np.mean(self.history_UI3))
-		else:
-			print(self.nowTheme[0], self.nowTheme_ExchgNum, '')
 
+
+
+# themeを管理してます（強化学習ようです）
+class historyTheme_for_RL:
+	def __init__(self):
+		self.allTheme = list(pd.read_csv('/Users/haruto/Desktop/mainwork/codes/refData/usingTheme.txt', header=None)[0].values)
+		self.historyTheme = []
+		self.nowTheme = ''
+
+	# 話題変更
+	def changeTheme(self):
+		if len(self.allTheme) != 0:
+			self.historyTheme.append(self.nowTheme)
+			self.nowTheme = random.choice(self.allTheme)
+			self.allTheme.remove(self.nowTheme)
+		else:
+			pass
+		return self.nowTheme
 
 
 
