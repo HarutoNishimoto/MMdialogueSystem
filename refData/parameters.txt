@@ -1,0 +1,52 @@
+### メモ
+# 190926_fea8は対話行為5で手で分類したやつ
+# 191015_daこれは対話行為8(6)のやつ
+# 191024_fea15_normがこれまでの暫定の対話行為セット
+# 200109_fea8が洗練された対話行為セット
+
+
+
+## 強化学習で使用します
+
+# テーマ情報と使用発話情報
+# クラスの情報はいらない
+path_theme_info=/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/1902themeInfo/1902MMcorpus_theme_2001.csv
+
+# ここにはagent_utteranceとcls(string)の情報が入っていればいい
+#path_utterance_by_class_named=/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/200109_cls8_bycls_named.csv
+path_utterance_by_class_named=/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/200110_baseDA4.csv
+
+# このファイルに書かれた順番でHMのactionを表示する
+#path_class_name=/Users/haruto/Desktop/mainwork/codes/refData/200109_cls8_DAname.csv
+path_class_name=/Users/haruto/Desktop/mainwork/codes/refData/200110_baseDA4_DAname.csv
+
+# 使用テーマ情報
+path_using_theme=/Users/haruto/Desktop/mainwork/codes/refData/usingTheme.txt
+
+# クラス数
+#class_num=8
+class_num=4
+
+# bigram報酬の値の管理ファイル
+path_reward_da=/Users/haruto/Desktop/mainwork/codes/refData/reward_bigramDA_2.csv
+
+# 簡易的対話行為の記述ファイル
+path_simple_da=/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/RL/simpleDA.csv
+
+# ユーザモデルの発話情報
+path_virtual_user_data=/Users/haruto/Desktop/mainwork/codes/refData/exchgUI3Info.csv
+
+
+# 理想のQテーブル
+path_risouQ=/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/RL/risouQ_action8
+
+
+## 対話行為セットの設計時に使用します
+
+path_using_features=/Users/haruto/Desktop/mainwork/codes/refData/200109_fea7.csv
+
+path_main_class_info=/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/200109_cls8.csv
+path_utterance_by_class=/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/200109_cls8_bycls.csv
+path_freq_class_theme=/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/200109_cls8_freq_cls-theme.csv
+path_feature_average_by_class=/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/200109_cls8_average.csv
+

@@ -62,7 +62,7 @@ def getSTP(f_state, f_action, f_param, action_num):
 
 # 武田先生用にfile作成
 def makeSTPInfoCsv():
-	f_label, f_da = './../pred_UI3_svr.csv', './../UI3_su_da.csv'
+	f_label, f_da = './../pred_UI3_svr.csv', '/Users/haruto/Desktop/mainwork/MMdata_201902/UI3/UI3_su_da.csv'
 
 	UIdf = pd.read_csv(f_label)
 	state = UIdf['label'].values
@@ -116,13 +116,13 @@ if __name__ == '__main__':
 
 
 	# 事前確率の設計（カウント）
-	getPriProb('./UI3_su_da.csv',
+	getPriProb('/Users/haruto/Desktop/mainwork/MMdata_201902/UI3/UI3_su_da.csv',
 		params.get('path_main_class_info'),
 		params.get('path_priprob'),
 		int(params.get('class_num')))
 
 	# 状態遷移確率の設計（カウント）
-	getSTP('./UI3_su_da.csv',
+	getSTP('/Users/haruto/Desktop/mainwork/MMdata_201902/UI3/UI3_su_da.csv',
 		params.get('path_main_class_info'),
 		params.get('path_STP'),
 		int(params.get('class_num')))

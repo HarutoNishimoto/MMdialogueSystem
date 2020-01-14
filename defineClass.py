@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 import numpy as np
 import pandas as pd
-import random
 import MeCab
 
 
@@ -11,7 +10,6 @@ class params:
 	def __init__(self):
 		self.params = {}
 		self.param_file_name = '/Users/haruto/Desktop/mainwork/codes/refData/parameters.txt'
-		self.cls_num = 20
 
 		with open(self.param_file_name, 'r')as f:
 			paramInfo = f.readlines()
@@ -70,23 +68,57 @@ class params:
 				wf.write(val)
 
 
+# themeを管理してます
+class historyTheme:
+	def __init__(self, random_choice=True):
+		p = params()
+		self.allTheme = list(pd.read_csv(p.get('path_using_theme'), header=None)[0].values)
+		self.random_choice = random_choice
+		if self.random_choice:
+			self.nowTheme = np.random.choice(self.allTheme)
+		else:
+			print('使用する話題をindexで指定してください')
+			for i, val in enumerate(self.allTheme):
+				print(i, val)
+			index = int(input('>> '))
+			self.nowTheme = self.allTheme[index]
+		self.allTheme.remove(self.nowTheme)
+		self.nowTheme_ExchgNum = 0
+		self.history_impression_1theme = []
+		self.max_exchange_num_1theme = 10
+		self.min_exchange_num_1theme = 5
+		self.low_UI3_border = 3
 
+	# 最初，話題変更する時はUIにNoneを入れること
+	def decideNextTheme(self, UI):
+		# 変更可否の決定
+		if UI == None:
+			chg = True
+		elif self.nowTheme_ExchgNum >= self.max_exchange_num_1theme:
+			chg = True
+		elif (self.nowTheme_ExchgNum >= self.min_exchange_num_1theme) and \
+		 (np.mean(self.history_impression_1theme) < self.low_UI3_border):
+			chg = True
+		else:
+			chg = False
 
-# UIの管理します
-class userImpression:
-	def __init__(self, queue_size=3):
-		self.prev_UI = [''] * queue_size
-		self.current_UI = 0
+		if chg:# 変更
+			if self.random_choice:
+				self.nowTheme = np.random.choice(self.allTheme)
+			else:
+				print('使用する話題をindexで指定してください')
+				for i, val in enumerate(self.allTheme):
+					print(i, val)
+				index = int(input('>> '))
+				self.nowTheme = self.allTheme[index]
+			self.allTheme.remove(self.nowTheme)
+			self.nowTheme_ExchgNum = 0
+			self.history_impression_1theme = []
+		else:# 変更しない
+			self.nowTheme_ExchgNum += 1
+			self.history_impression_1theme.append(UI)
 
-	def update(self, UI):
-		self.prev_UI.append(self.current_UI)
-		del self.prev_UI[0]
-		self.current_UI = UI
-
-	def getUserImpression(self):
-		return self.current_UI
-
-
+		return chg, self.nowTheme
 
 
 
@@ -94,23 +126,11 @@ class userImpression:
 class historySysUtte:
 	def __init__(self):
 		self.history_sysutte = []
-		self.history_sysutte_default = {}
 		self.history_sysutte_class = []
 
-	def add_sysutte(self, utterance, theme):
-		if theme == 'default':
-			if utterance in self.history_sysutte_default:
-				self.history_sysutte_default[utterance] += 1
-			else:
-				self.history_sysutte_default[utterance] = 1
-		else:
-			self.history_sysutte.append(utterance)
-
-	def add_sysutte_class(self, clas):
+	def add_sysutte(self, utterance, clas):
+		self.history_sysutte.append(utterance)
 		self.history_sysutte_class.append(clas)
-
-	def get_prev_sysutte_class(self):
-		return self.history_sysutte_class[-1]
 
 
 
@@ -139,84 +159,6 @@ class historyUserWord:
 						self.history_user_word[word] = 1
 						self.user_latest_new_word.append(word)
 				node = node.next
-
-
-# themeを管理してます
-class historyTheme:
-	def __init__(self, random_choice=True):
-		self.allTheme = list(pd.read_csv('/Users/haruto/Desktop/mainwork/codes/refData/usingTheme.txt', header=None)[0].values)
-		self.random_choice = random_choice
-		if self.random_choice == True:
-			self.nowTheme = random.choice(self.allTheme)
-		else:
-			print('使用する話題をindexで指定してください')
-			for i, val in enumerate(self.allTheme):
-				print(i, val)
-			index = int(input('>> '))
-			self.nowTheme = self.allTheme[index]
-		self.historyTheme = []
-		self.nowTheme_ExchgNum = 1
-		self.history_UI3 = []
-		self.max_exchange_num_1theme = 10
-		self.min_exchange_num_1theme = 5
-		self.low_UI3_border = 4.0
-
-		self.allTheme.remove(self.nowTheme)
-
-	def decideNextTheme(self, UI):
-		# 変更可否
-		if self.nowTheme_ExchgNum > self.max_exchange_num_1theme:
-			chg = True
-		elif (self.nowTheme_ExchgNum > self.min_exchange_num_1theme) and (np.mean(self.history_UI3) < self.low_UI3_border):
-			chg = True
-		else:
-			chg = False
-		# 変更
-		if chg:
-			self.historyTheme.append(self.nowTheme)
-			if self.random_choice == True:
-				self.nowTheme = random.choice(self.allTheme)
-			else:
-				print('使用する話題をindexで指定してください')
-				for i, val in enumerate(self.allTheme):
-					print(i, val)
-				index = int(input('>> '))
-				self.nowTheme = self.allTheme[index]
-			self.allTheme.remove(self.nowTheme)
-			self.nowTheme_ExchgNum = 1
-			self.history_UI3 = []
-		else:
-			# 1発話の場合
-			if (len(self.historyTheme) == 0) and (len(self.history_UI3) == 0):
-				self.nowTheme_ExchgNum = 1
-				self.history_UI3.append(UI)
-			else:
-				self.nowTheme_ExchgNum += 1
-				self.history_UI3.append(UI)		
-
-		return self.nowTheme
-
-
-
-
-# themeを管理してます（強化学習ようです）
-class historyTheme_for_RL:
-	def __init__(self):
-		self.allTheme = list(pd.read_csv('/Users/haruto/Desktop/mainwork/codes/refData/usingTheme.txt', header=None)[0].values)
-		self.historyTheme = []
-		self.nowTheme = ''
-
-	# 話題変更
-	def changeTheme(self):
-		if len(self.allTheme) != 0:
-			self.historyTheme.append(self.nowTheme)
-			self.nowTheme = random.choice(self.allTheme)
-			self.allTheme.remove(self.nowTheme)
-		else:
-			pass
-		return self.nowTheme
-
-
 
 
 

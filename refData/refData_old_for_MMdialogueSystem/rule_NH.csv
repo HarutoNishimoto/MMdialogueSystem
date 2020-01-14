@@ -1,0 +1,17 @@
+questionmark,depend_word,nod_word,lenS,cls
+o,o,o,o,question_depend_o
+o,o,o,x,question_depend_o
+o,o,x,o,question_depend_o
+o,o,x,x,question_depend_o
+o,x,o,o,question_depend_x
+o,x,o,x,question_depend_x
+o,x,x,o,question_depend_x
+o,x,x,x,question_depend_x
+x,o,o,o,response_demonstrative_o
+x,o,o,x,response_demonstrative_o
+x,o,x,o,response_demonstrative_o
+x,o,x,x,response_demonstrative_o
+x,x,o,o,response_demonstrative_x
+x,x,o,x,response_demonstrative_x
+x,x,x,o,information_offer
+x,x,x,x,response_demonstrative_x

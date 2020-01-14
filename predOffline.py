@@ -12,12 +12,9 @@ import matplotlib.pyplot as plt
 
 # システム発話を入力として，(class, theme)を出力する
 def getUtteranceClassTheme(utterance):
-
     params = defineClass.params()
-    classFile = params.get('path_utterance_by_class')
-    themeFile = params.get('path_theme_info')
-    CLSdf = pd.read_csv(classFile)
-    THEMEdf = pd.read_csv(themeFile)
+    CLSdf = pd.read_csv(params.get('path_utterance_by_class'))
+    THEMEdf = pd.read_csv(params.get('path_theme_info'))
 
     if '***' in utterance:
         return '-', '-'
@@ -33,42 +30,39 @@ if __name__ == '__main__':
     optparser = OptionParser()
     optparser.add_option('-A', dest='action',
                         help='action type', default=None, type='str')
-    optparser.add_option('--model', dest='model',
-                        help='euclid_dim3? euclid_dim1? base? hand_STP?', default='euclid_dim3', type='str')
+    optparser.add_option('--model', dest='model', default='sample', type='str')
+    optparser.add_option('--seed', dest='seed', default=777, type='int')
     (options, args) = optparser.parse_args()
     if options.action is None:
         sys.exit('System will exit')
     else:
-        model = options.model
+        pass
 
     # パラメータ管理
     params = defineClass.params()
+    # シード決め
+    np.random.seed(options.seed)
+
+
+
 
     ### オフライン．1発話ずつユーザ発話とUIを入力していくもの
     if options.action == 'offline':
         # init
-        UI = defineClass.userImpression()
         utteHis = defineClass.historySysUtte()
-        themeHis = defineClass.historyTheme(random_choice=False)
+        themeHis = defineClass.historyTheme(random_choice=True)
         init_UI3 = 4
-        current_belief, next_belief = np.ones((7, 1)), np.ones((7, 1))
-        exchg_num = 15
+        exchg_num = 10
 
         df = pd.DataFrame(data=[], columns=['exchgID', 'speaker', 'class', 'theme', 'UI3', 'utterance'])
         try:
             for i in range(exchg_num):
-                # POMDPでb(s)を更新
-                current_belief = next_belief
                 if i == 0:
-                    UI.update(init_UI3)
-                    next_belief = cb.updateBelief(current_belief, UI, 'change_theme', params)
-                    themeHis.decideNextTheme(init_UI3)
-                    next_sysUtte, action = cb.Policy(next_belief, None, utteHis, themeHis, model=model)
+                    theme = themeHis.decideNextTheme(init_UI3)[1]
+                    next_sysUtte, action = cb.utterance_selection(init_UI3, None, utteHis, theme)
                 else:
-                    UI.update(current_UI3)
-                    next_belief = cb.updateBelief(current_belief, UI, action, params)
-                    themeHis.decideNextTheme(current_UI3)
-                    next_sysUtte, action = cb.Policy(next_belief, user_utterance, utteHis, themeHis, model=model)
+                    theme = themeHis.decideNextTheme(current_UI3)[1]
+                    next_sysUtte, action = cb.utterance_selection(current_UI3, user_utterance, utteHis, theme)
                 print(next_sysUtte)
                 # ユーザの発話情報を入力
                 user_utterance = input('what do you say? >> ')
@@ -77,11 +71,15 @@ if __name__ == '__main__':
                 c, t = getUtteranceClassTheme(next_sysUtte)
                 df.loc[str(i).zfill(3)+'_S'] = [str(i).zfill(3), 'S', action, t, '-', next_sysUtte]
                 df.loc[str(i).zfill(3)+'_U'] = [str(i).zfill(3), 'U', '-', '-', current_UI3, user_utterance]
-            df.to_csv('samplelog.csv', index=None)
+            df.to_csv('{}_log.csv'.format(options.model), index=None)
 
         except KeyboardInterrupt:
             print('\n終了します．')
-            df.to_csv('samplelog.csv', index=None)
+            df.to_csv('{}_log.csv'.format(options.model), index=None)
+
+
+
+
 
 
 
@@ -109,12 +107,6 @@ if __name__ == '__main__':
             data=np.array([list(set(df['exchgID'].values)), annotation]).transpose(),
             columns=['exchgID', 'annotation'])
         ANNOdf.to_csv(basename+'_'+name+'.'+filetype, index=None)
-
-
-
-
-
-
 
 
 

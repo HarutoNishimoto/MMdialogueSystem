@@ -1,0 +1,12 @@
+reaction
+lenS
+lenU
+lendiff
+io
+na
+oa
+op
+pa
+qw
+qy
+su

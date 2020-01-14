@@ -1,0 +1,15 @@
+feature,norm,weight
+
+旅行,-,1
+スポーツ,-,1
+音楽,-,1
+食事,-,1
+default,-,1
+
+depend_word,-,2
+nod_word,-,2
+thank_word,-,2
+questionmark,-,2
+
+lenS,norm,1
+UI3average,norm,1

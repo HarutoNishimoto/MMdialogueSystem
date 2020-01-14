@@ -47,11 +47,8 @@ sys_utterance.py
 analysys.py
 分析のためのコードいろいろ
 
-da5.csv
-対話行為(5)の詳細
-
-UI3_su_da.csv
-対話行為(8)の詳細
+old_dialogue_act
+これまで作成した対話行為の保管場所
 
 191004_mix分析
 分析たくさん
