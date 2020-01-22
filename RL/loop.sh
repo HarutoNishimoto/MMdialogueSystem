@@ -2,12 +2,13 @@
 
 
 #for (( i = 10 ; i < 40 ; i=i+10 ));
-for i in 30 50
+for i in 99 995
 do
-	for j in 1 5 10 50
+	for j in 1 2
 	do
-	#python q_learning.py -A chk --ep 500 --R_oneUI 10 --R_persistUI ${i} --Rc_bigram ${j} --model 17_r2-10-${i}-${j}c
-	python q_learning.py -A train --ep 500 --R_oneUI 10 --R_persistUI ${i} --Rc_bigram ${j} --model 17_r3-10-${i}-${j}c > 17_r3-10-${i}-${j}c
+		python q_learning.py -A train --model 200117_c0${i}_s${j} --coef_epsilon 0.${i} --seed ${j}
+		python forRL.py -A Qval -I 200117_c0${i}_s${j} -T Q
+		python forRL.py -A Qval -I 200117_c0${i}_s${j} -T Qfreq
 	done
 done
 

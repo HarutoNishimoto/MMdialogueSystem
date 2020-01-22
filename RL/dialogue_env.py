@@ -8,6 +8,9 @@ from optparse import OptionParser
 from defineClass import historySysUtte
 import copy
 from el_agent import softmax
+import MeCab
+from sklearn import preprocessing
+
 
 
 
@@ -30,9 +33,9 @@ class DialogueEnv(historySysUtte):
 
         # 状態は「心象」「直前のシステム対話行為」「対話の位置」の組み合わせ
         self.states_sys_da = ['ct','io','re','qs']
-        self.states_impression = ['h','n','l']
-        self.states_dialogue_position = ['fh','lh']
-        self.states = list(itertools.product(self.states_sys_da, self.states_impression, self.states_dialogue_position))
+        self.states_noun_presence = ['Nx','No']
+        self.states_impression = ['l','n','h']
+        self.states = list(itertools.product(self.states_sys_da, self.states_noun_presence, self.states_impression))
         self.states = ['_'.join(x) for x in self.states]
 
         # stateにindex付け
@@ -40,23 +43,24 @@ class DialogueEnv(historySysUtte):
         for i, val in enumerate(self.states):
             self.stateIndex[val] = i
 
-        self.thres_low_UI = 3.5
-        self.thres_high_UI = 4.5
+        self.thres_low_UI = 3
+        self.thres_high_UI = 5
         self.persist_UI_exchgs = 3
         self.reward_da_df = pd.read_csv(self.params.get('path_reward_da'), index_col=0)
         self.sys_utterance_log = []
         self.user_utterance_log = []
-        self.weight_specific_theme = 0.7
+        self.weight_specific_theme = 0.6
 
     # 初期化のような感じ
     def reset(self):
         super().__init__()
         self.sys_utterance_log = []
         self.user_utterance_log = []
-        return self.stateIndex['io_n_fh']
+        #return self.stateIndex['io_n_fh']
+        return self.stateIndex['io_Nx_n']
 
     # 対話行為を簡単な分類に変換(4種類(ct/io/re/qs))
-    def get_simple_da_from_sys_utterance(self, sys_utterance):
+    def getSimpleDAFromSysUtterance(self, sys_utterance):
         df = pd.read_csv(self.params.get('path_simple_da'))
         da = df[df['agent_utterance'] == sys_utterance]['da_simple'].values
         if '***' in sys_utterance:
@@ -66,7 +70,7 @@ class DialogueEnv(historySysUtte):
         return simple_da
 
     # 入力：交換番号，出力：前半か後半
-    def get_dialogue_position(self, exchg_progress):
+    def getDialoguePosition(self, exchg_progress):
         if exchg_progress < 0.5:
             position = 'fh'
         else:
@@ -74,8 +78,8 @@ class DialogueEnv(historySysUtte):
         return position
 
     # 心象を離散化
-    def get_impression_level(self, impression):
-        if impression < self.thres_low_UI:
+    def getImpressionLevel(self, impression):
+        if impression <= self.thres_low_UI:
             impression_level = 'l'
         elif self.thres_high_UI <= impression:
             impression_level = 'h'
@@ -83,13 +87,28 @@ class DialogueEnv(historySysUtte):
             impression_level = 'n'
         return impression_level
 
+    # 文から固有名詞/一般名詞の存在有無を判断
+    def getSpecificNoun(self, sentence):
+        mt = MeCab.Tagger()
+        node = mt.parseToNode(sentence)
+        properNouns = []
+        while node:
+            fields = node.feature.split(",")
+            if (fields[0] == '名詞') and (fields[1] in ['固有名詞', '一般']):
+                properNouns.append(node.surface)
+            node = node.next
+        if len(properNouns) > 0:
+            return 'No'
+        else:
+            return 'Nx'
+
     # 次のstateを決定
-    def get_next_state(self, exchg_progress, impression, sys_utterance):
-        # n_stateは簡単のためにgivenとする
-        da_simple = self.get_simple_da_from_sys_utterance(sys_utterance)
-        impression_level = self.get_impression_level(impression)
-        dialogue_pos = self.get_dialogue_position(exchg_progress)
-        n_state = self.stateIndex['{}_{}_{}'.format(da_simple, impression_level, dialogue_pos)]
+    def get_next_state(self, impression, sys_utterance, user_utterance):
+        da_simple = self.getSimpleDAFromSysUtterance(sys_utterance)
+        impression_level = self.getImpressionLevel(impression)
+        noun_presence = self.getSpecificNoun(user_utterance)
+        #dialogue_pos = self.getDialoguePosition(exchg_progress)
+        n_state = self.stateIndex['{}_{}_{}'.format(da_simple, noun_presence, impression_level)]
         return n_state
 
     # 特定話題の選択に重み（weight）をつける
@@ -137,19 +156,22 @@ class DialogueEnv(historySysUtte):
 
     # actionに基づいた発話選択（ランダム選択）
     # heatmapにsoftmaxをちゃんと反映させた
-    def utterance_selection_softmax(self, action, prob_actions, theme):
+    def utterance_selection_softmax(self, chg_theme, theme, prob_actions, coef=1):
         actions = copy.deepcopy(self.actions)
         prob_actions = copy.deepcopy(prob_actions)
+        prob_actions = preprocessing.minmax_scale(prob_actions).tolist()# 正規化
+
 
         # 話題変更のタイミングでは専用の発話を使用する
-        if action == 'change_theme':
+        if chg_theme:
             next_sysutte = ' *** これから{}の話をしましょう***'.format(theme)
-            self.add_sysutte(next_sysutte, action)
+            self.add_sysutte(next_sysutte, 'change_theme')
         else:
             done = False
             while not done:
                 # 選択する
-                action = np.random.choice(actions, p=softmax(prob_actions))
+                print(softmax(prob_actions, coef=coef))
+                action = np.random.choice(actions, p=softmax(prob_actions, coef=coef))
                 df = pd.read_csv(self.params.get('path_utterance_by_class_named'))
                 CANDIDATEdf = df[(df['cls'] == action) &
                     ((df['theme'] == theme) | (df['theme'] == 'default'))]
@@ -172,6 +194,11 @@ class DialogueEnv(historySysUtte):
                     done = True
 
         return next_sysutte
+
+
+
+
+
 
 
 

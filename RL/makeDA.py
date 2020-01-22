@@ -26,8 +26,8 @@ if __name__ == '__main__':
 	import warnings
 	warnings.simplefilter("ignore")
 	# userID
-	df = pd.read_csv('/Users/haruto/Desktop/mainwork/codes/refData/userID_1902.txt', header=None)
-	userID_1902 = df[0].values
+	#df = pd.read_csv('/Users/haruto/Desktop/mainwork/codes/refData/userID_1902.txt', header=None)
+	#userID_1902 = df[0].values
 	# param get
 	params = defineClass.params()
 
@@ -127,6 +127,22 @@ if __name__ == '__main__':
 		for da in autoDA:
 			print(da)
 			print(collections.Counter(df[df['cls_x'] == da]['cls_y'].values))
+
+
+
+	if options.action == 'calaveUI':
+		UTTEdf = pd.read_csv('/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/200110_baseDA4.csv')
+		UIdf = pd.read_csv('/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/200109_cls8.csv')
+		df = pd.merge(UTTEdf, UIdf, on='agent_utterance')
+
+		da_simple = set(df['cls_x'].values)
+
+		for da in da_simple:
+			UIave_cnt = df[df['cls_x'] == da]['UI3average'].values
+			print(da, len(UIave_cnt), np.mean(UIave_cnt))
+
+
+
 
 
 

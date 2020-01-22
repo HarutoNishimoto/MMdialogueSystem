@@ -8,6 +8,8 @@ from sklearn import preprocessing
 sys.path.append('/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem')
 import defineClass
 import matplotlib.pyplot as plt
+import pickle
+from el_agent import softmax
 
 
 
@@ -16,6 +18,10 @@ if __name__ == '__main__':
 	optparser = OptionParser()
 	optparser.add_option('-A', dest='action',
 						help='action type', default=None, type='str')
+	optparser.add_option('-I', dest='input',
+						help='input', default=None, type='str')
+	optparser.add_option('-T', dest='type',
+						help='type', default=None, type='str')
 	(options, args) = optparser.parse_args()
 
 	if options.action is None:
@@ -27,7 +33,7 @@ if __name__ == '__main__':
 	import warnings
 	warnings.simplefilter("ignore")
 	# userID
-	df = pd.read_csv('/Users/haruto/Desktop/mainwork/codes/refData/userID_1902.txt', header=None)
+	df = pd.read_csv('/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/refData/userID_1902.txt', header=None)
 	userID_1902 = df[0].values
 	# param get
 	params = defineClass.params()
@@ -56,17 +62,6 @@ if __name__ == '__main__':
 		df.to_csv('exchgUI3Info.csv', index=None)
 
 
-	# TCラベルを表示
-	if options.action == 'TClabel':
-		TCdf = pd.read_csv('/Users/haruto/Desktop/mainwork/MMdata_201902/annotate/TCanno/1902F3002.csv')
-		TCaverage = TCdf[['F1','F2','F3','F5','M2']].values
-		val = np.average(TCaverage, axis=1)
-		print(val)
-		plt.plot(range(len(val)), val)
-		plt.show()
-
-
-
 	# mecabが取れる名詞を確認
 	if action == 'getnoun':
 		mt = MeCab.Tagger()
@@ -91,10 +86,6 @@ if __name__ == '__main__':
 
 
 
-
-
-
-
 	# クラスに名前つけ
 	if options.action == 'naming':
 		df = pd.read_csv(params.get('path_utterance_by_class'))
@@ -108,15 +99,122 @@ if __name__ == '__main__':
 		df.to_csv(params.get('path_utterance_by_class').split('.')[0] + '_named.csv', index=None)
 
 
+	# parameters.txtを書き換え
+	if options.action == 'rewrite':
+		keyword = ['path_utterance_by_class_named','path_class_name','class_num']
+		with open('/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/refData/parameters.txt', 'r')as rf:
+			lines = rf.readlines()
+
+		for i, val in enumerate(lines):
+			for key in keyword:
+				if key in lines[i]:
+					if lines[i].startswith('###'):
+						lines[i] = lines[i].replace('###','')
+					else:
+						lines[i] = '###' + lines[i]
+
+					print(lines[i])
+
+		with open('/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/refData/parameters.txt', 'w')as wf:
+			for l in lines:
+				wf.write(l)
+
+
+
+	# 学習回数をテーブルの要素ごとに表示
+	if options.action == 'Qval':
+		# 学習すみQテーブルの読み込み
+		with open('{}/{}_{}'.format(options.input, options.input, options.type), mode='rb') as f:
+			Q = pickle.load(f)
+
+		# 辞書を2次元リストに変換
+		state_size, action_size = 24, 4
+		reward_map = np.zeros((state_size, action_size))
+		for s in range(state_size):#state_size
+			for a in range(action_size):#action_size
+				if s in Q.keys():
+					reward_map[s][a] = Q[s][a]
+
+		df = pd.DataFrame(data=reward_map, columns=range(action_size), index=range(state_size))
+		df.to_csv('{}/{}_{}.csv'.format(options.input, options.input, options.type))
 
 
 
 
-	# クラスに名前つけ
-	if options.action == 'sort':
-		df = pd.read_csv('/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/RL/exchgUI3Info.csv')
-		s_df = df.sort_values(['sys_utterance', 'user_utterance', 'UI3average'])
-		s_df.to_csv('exchgUI3Info_sort.csv', index=None)
+
+
+
+
+
+
+
+
+
+	# coef_epsilonについての検討
+	if options.action == 'ep':
+		randomtime = 0
+		for e in range(500):
+			epsilon = (0.90 ** e)
+			randomtime += epsilon * 10
+			print(e, epsilon, randomtime)
+
+			if epsilon < 0.1:
+				print(e, epsilon)
+				break
+
+
+	# softmaxすることによる効果を検証
+	if options.action == 'softmax':
+		# 学習すみQテーブルの読み込み
+		with open('{}/{}_Q'.format(options.input, options.input), mode='rb') as f:
+			Q = pickle.load(f)
+
+		# 辞書を2次元リストに変換
+		state_size, action_size = 24, 8
+		reward_map = np.zeros((state_size, action_size))
+		for s in range(state_size):#state_size
+			for a in range(action_size):#action_size
+				if s in Q.keys():
+					reward_map[s][a] = Q[s][a]
+
+		###
+		reward_map_normed = preprocessing.minmax_scale(reward_map, axis=1)
+		df = pd.DataFrame(data=reward_map_normed, columns=range(action_size), index=range(state_size))
+		df.to_csv('{}/{}_normed.csv'.format(options.input, options.input))
+
+		###
+		aaa = reward_map
+		for i, val in enumerate(aaa):
+			aaa[i] = softmax(val, coef=1)
+		df = pd.DataFrame(data=aaa, columns=range(action_size), index=range(state_size))
+		df.to_csv('{}/{}_smax.csv'.format(options.input, options.input))
+
+		###
+		aaa = reward_map_normed
+		for i, val in enumerate(aaa):
+			aaa[i] = softmax(val, coef=1)
+		df = pd.DataFrame(data=aaa, columns=range(action_size), index=range(state_size))
+		df.to_csv('{}/{}_norm_smax.csv'.format(options.input, options.input))
+
+
+
+	# softmaxの係数についての検討
+	if options.action == 'exsoft':
+		# 学習すみQテーブルの読み込み
+		with open('{}/{}'.format(options.input, options.input), mode='rb') as f:
+			Q = pickle.load(f)
+
+		# 辞書を2次元リストに変換
+		state_size, action_size = 24, 8
+		reward_map = np.zeros((state_size, action_size))
+		for s in range(state_size):#state_size
+			for a in range(action_size):#action_size
+				if s in Q.keys():
+					reward_map[s][a] = Q[s][a]
+
+			print(softmax(preprocessing.minmax_scale(reward_map[s]), coef=int(options.type))*100)
+
+
 
 
 

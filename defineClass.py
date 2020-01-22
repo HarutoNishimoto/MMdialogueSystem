@@ -9,7 +9,7 @@ import MeCab
 class params:
 	def __init__(self):
 		self.params = {}
-		self.param_file_name = '/Users/haruto/Desktop/mainwork/codes/refData/parameters.txt'
+		self.param_file_name = '/Users/haruto/Desktop/mainwork/codes/MMdialogueSystem/refData/parameters.txt'
 
 		with open(self.param_file_name, 'r')as f:
 			paramInfo = f.readlines()
@@ -74,15 +74,6 @@ class historyTheme:
 		p = params()
 		self.allTheme = list(pd.read_csv(p.get('path_using_theme'), header=None)[0].values)
 		self.random_choice = random_choice
-		if self.random_choice:
-			self.nowTheme = np.random.choice(self.allTheme)
-		else:
-			print('使用する話題をindexで指定してください')
-			for i, val in enumerate(self.allTheme):
-				print(i, val)
-			index = int(input('>> '))
-			self.nowTheme = self.allTheme[index]
-		self.allTheme.remove(self.nowTheme)
 		self.nowTheme_ExchgNum = 0
 		self.history_impression_1theme = []
 		self.max_exchange_num_1theme = 10
@@ -94,9 +85,9 @@ class historyTheme:
 		# 変更可否の決定
 		if UI == None:
 			chg = True
-		elif self.nowTheme_ExchgNum >= self.max_exchange_num_1theme:
+		elif self.nowTheme_ExchgNum >= self.max_exchange_num_1theme-1:
 			chg = True
-		elif (self.nowTheme_ExchgNum >= self.min_exchange_num_1theme) and \
+		elif (self.nowTheme_ExchgNum >= self.min_exchange_num_1theme-1) and \
 		 (np.mean(self.history_impression_1theme) < self.low_UI3_border):
 			chg = True
 		else:
@@ -161,10 +152,7 @@ class historyUserWord:
 				node = node.next
 
 
-
 if __name__ == '__main__':
-
-
 	pass
 
 

@@ -8,7 +8,7 @@ import pickle
 
 # 理想のQを手で作成
 def make_risouQ(Q_name, state_name, action_name):
-    green, yellow_green, cream, orange = 2, 1, 0, -1
+    green, yellow_green, cream, orange = 3, 2, 1, 0
 
     state_size = len(state_name)      # row
     action_size = len(action_name)    # col
@@ -17,20 +17,23 @@ def make_risouQ(Q_name, state_name, action_name):
     Q = {}
     for s in range(state_size):   #state_size
         if s in range(0,6):
-            Q[s] = [yellow_green] * 3 + [orange] * 3 + [yellow_green] * 2
+            Q[s] = [orange] * 2 + [green] * 1 + [orange] * 4 + [yellow_green] * 1
         if s in range(6,12):
+            Q[s] = [cream] * 2 + [yellow_green] * 1 + [cream] * 4 + [yellow_green] * 1
+        if s in range(12,15):
             Q[s] = [yellow_green] * 3 + [cream] * 4 + [yellow_green] * 1
-        if s in range(12,18):
-            Q[s] = [yellow_green] * 3 + [cream] * 4 + [yellow_green] * 1
-        if s in range(18,24):
-            Q[s] = [cream] * 2 + [green] * 1 + [orange] * 5
+        if s in range(15,18):
+            Q[s] = [green] * 2 + [yellow_green] * 1 + [cream] * 4 + [yellow_green] * 1
+        if s in range(18,21):
+            Q[s] = [yellow_green] * 3 + [cream] * 1 + [yellow_green] * 4
+        if s in range(21,24):
+            Q[s] = [yellow_green] * 3 + [green] * 1 + [yellow_green] * 4
 
     for k, v in Q.items():
         print(k, v)
 
     with open(Q_name, mode='wb') as f:
         pickle.dump(Q, f) 
-
 
 
 
@@ -105,6 +108,18 @@ def Qsum(Qarray, state_size, action_size):
     for i, val in enumerate(reward_map):
         Qsum[i] = reward_map[i]
     return Qsum
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

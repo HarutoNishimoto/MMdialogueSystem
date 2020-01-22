@@ -6,6 +6,7 @@ import pandas as pd
 import pickle
 import os
 import itertools
+from sklearn import preprocessing
 
 
 
@@ -48,10 +49,12 @@ class ELAgent():
         self.epsilon = epsilon
         self.reward_log = []
         self.dialogue_log = []
+        self.max_n_exchg = 10
 
     # epsilon以下でランダムな行動，それ以外はQに従った行動
     # softmax=Trueで確率的に選択するようにできます
     def policy(self, s, actions, selection='argmax'):
+
         if selection == 'argmax':
             if np.random.random() < self.epsilon:
                 return np.random.randint(len(actions))
@@ -65,7 +68,7 @@ class ELAgent():
                 return np.random.randint(len(actions))
             else:
                 if s in self.Q and sum(self.Q[s]) != 0:
-                    return np.argmax(softmax(self.Q[s]))
+                    return np.argmax(softmax(preprocessing.minmax_scale(self.Q[s])))
                 else:
                     return np.random.randint(len(actions))
         else:
@@ -80,9 +83,9 @@ class ELAgent():
     def append_log_reward(self, reward):
         self.reward_log.append(reward)
 
-    def append_log_dialogue(self, exchgID, da, theme, impression, s_utte, u_utte):
-        self.dialogue_log.append([exchgID+'_S', da, theme, '-', s_utte])
-        self.dialogue_log.append([exchgID+'_U', '-', '-', impression, u_utte])
+    def append_log_dialogue(self, exchgID, state, action, theme, impression, s_utte, u_utte):
+        self.dialogue_log.append([exchgID+'_S', state, action, theme, '-', s_utte])
+        self.dialogue_log.append([exchgID+'_U', '-', '-', '-', impression, u_utte])
 
     def show_reward_log(self, interval=50, episode=-1, filename='sample.png'):
         if episode > 0:
@@ -113,7 +116,7 @@ class ELAgent():
             #plt.show()
 
     def write_dialogue_log(self, filename):
-        df = pd.DataFrame(data=self.dialogue_log, columns=['exchgID', 'da', 'theme', 'UI', 'utterance'])
+        df = pd.DataFrame(data=self.dialogue_log, columns=['exchgID', 'state', 'action', 'theme', 'UI', 'utterance'])
         filename_new = search_and_rename_filename(filename)
         df.to_csv(filename_new, index=None)
         print('finished making file "{}".'.format(filename_new))
@@ -121,8 +124,11 @@ class ELAgent():
     def saveR(self, filename):
         np.save(filename, np.array(self.reward_log))
 
-    def saveQ(self, filename):
+    def saveQ(self, table, filename):
         with open(filename, mode='wb') as f:
-            pickle.dump(dict(self.Q), f) 
+            pickle.dump(dict(table), f)
+
+
+
 
 
