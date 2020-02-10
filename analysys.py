@@ -42,8 +42,8 @@ if __name__ == '__main__':
 	# params init
 	params = defineClass.params()
 	# userID
-	df = pd.read_csv('./../refData/userID_1902.txt', header=None)
-	userID_1902 = df[0].values
+	#df = pd.read_csv('./../refData/userID_1902.txt', header=None)
+	#userID_1902 = df[0].values
 	# feature_select
 	FEAdf = pd.read_csv(params.get('path_using_features'), header=None)
 	fea_name = FEAdf[0].values
@@ -76,16 +76,6 @@ if __name__ == '__main__':
 
 		df[df['cls_y'] == 3][['name','theme_index','agent_utterance']].to_csv('theme_index_average_x.csv', index=None)
 		df[df['cls_y'] == 4][['name','theme_index','agent_utterance']].to_csv('theme_index_average_o.csv', index=None)
-
-
-
-
-	# クラスごとの発話数
-	if options.action == 'index':
-		CLSdf = pd.read_csv('190926_fea8_clsInfo.csv')
-
-
-
 
 
 
